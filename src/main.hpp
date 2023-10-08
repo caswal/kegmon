@@ -49,7 +49,13 @@ constexpr auto PIN_LED = BUILTIN_LED;
 #error "Undefined target platform"
 #endif
 
-enum UnitIndex { U1 = 0, U2 = 1 };
+#if CFG_SCALECOUNT == 2
+    enum UnitIndex { U1 = 0, U2 = 1 };
+#elif CFG_SCALECOUNT == 3
+    enum UnitIndex { U1 = 0, U2 = 1, U3 = 2 };
+#else
+    enum UnitIndex { U1 = 0, U2 = 1, U3 = 2, U4 = 3, };
+#endif
 /*
  * RAW: Last value read
  * STATS: Statistics applied and average value used over the last 20 seconds

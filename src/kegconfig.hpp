@@ -29,14 +29,14 @@ SOFTWARE.
 
 constexpr auto PARAM_BREWFATHER_USERKEY = "brewfather-userkey";
 constexpr auto PARAM_BREWFATHER_APIKEY = "brewfather-apikey";
-constexpr auto PARAM_BREWSPY_TOKEN1 = "brewspy-token1";
-constexpr auto PARAM_BREWSPY_TOKEN2 = "brewspy-token2";
 constexpr auto PARAM_DISPLAY_LAYOUT = "display-layout";
 constexpr auto PARAM_TEMP_SENSOR = "temp-sensor";
 constexpr auto PARAM_DISPLAY_DRIVER = "display-driver";
 constexpr auto PARAM_SCALE_SENSOR = "scale-sensor";
 constexpr auto PARAM_WEIGHT_UNIT = "weight-unit";
 constexpr auto PARAM_VOLUME_UNIT = "volume-unit";
+constexpr auto PARAM_BREWSPY_TOKEN1 = "brewspy-token1";
+constexpr auto PARAM_BREWSPY_TOKEN2 = "brewspy-token2";
 constexpr auto PARAM_KEG_WEIGHT1 = "keg-weight1";
 constexpr auto PARAM_KEG_WEIGHT2 = "keg-weight2";
 constexpr auto PARAM_KEG_VOLUME1 = "keg-volume1";
@@ -72,6 +72,36 @@ constexpr auto PARAM_KALMAN_MEASUREMENT = "kalman-measurement";
 constexpr auto PARAM_KALMAN_ESTIMATION = "kalman-estimation";
 constexpr auto PARAM_KALMAN_ACTIVE = "kalman-active";
 
+#if CFG_SCALECOUNT > 2
+constexpr auto PARAM_BREWSPY_TOKEN3 = "brewspy-token3";
+constexpr auto PARAM_KEG_WEIGHT3 = "keg-weight3";
+constexpr auto PARAM_KEG_VOLUME3 = "keg-volume3";
+constexpr auto PARAM_GLASS_VOLUME3 = "glass-volume3";
+constexpr auto PARAM_BEER_NAME3 = "beer-name3";
+constexpr auto PARAM_BEER_ABV3 = "beer-abv3";
+constexpr auto PARAM_BEER_IBU3 = "beer-ibu3";
+constexpr auto PARAM_BEER_EBC3 = "beer-ebc3";
+constexpr auto PARAM_BEER_FG3 = "beer-fg3";
+constexpr auto PARAM_SCALE_FACTOR3 = "scale-factor3";
+constexpr auto PARAM_SCALE_OFFSET3 = "scale-offset3";
+constexpr auto PARAM_SCALE_TEMP_FORMULA3 = "scale-temp-formula3";
+#endif
+
+#if CFG_SCALECOUNT > 3
+constexpr auto PARAM_BREWSPY_TOKEN4 = "brewspy-token4";
+constexpr auto PARAM_KEG_WEIGHT4 = "keg-weight4";
+constexpr auto PARAM_KEG_VOLUME4 = "keg-volume4";
+constexpr auto PARAM_GLASS_VOLUME4 = "glass-volume4";
+constexpr auto PARAM_BEER_NAME4 = "beer-name4";
+constexpr auto PARAM_BEER_ABV4 = "beer-abv4";
+constexpr auto PARAM_BEER_IBU4 = "beer-ibu4";
+constexpr auto PARAM_BEER_EBC4 = "beer-ebc4";
+constexpr auto PARAM_BEER_FG4 = "beer-fg4";
+constexpr auto PARAM_SCALE_FACTOR4 = "scale-factor4";
+constexpr auto PARAM_SCALE_OFFSET4 = "scale-offset4";
+constexpr auto PARAM_SCALE_TEMP_FORMULA4 = "scale-temp-formula4";
+#endif
+
 struct BeerInfo {
   String _name = "";
   float _abv = 0.0;
@@ -93,12 +123,20 @@ struct HardwareInfo {
 #elif defined(ESP32S2)
   int _displayData = SDA;
   int _displayClock = SCL;
-  int _scale1Data = A17;
-  int _scale1Clock = A15;
+  int _scale1Data = 8;
+  int _scale1Clock = 9;
   int _scale2Data = A6;
   int _scale2Clock = A11;
-  int _tempData = A10;
-  int _tempPower = A8;
+#if CFG_SCALECOUNT > 2
+  int _scale3Data = A17;
+  int _scale3Clock = A15;
+#endif
+#if CFG_SCALECOUNT > 3
+  int _scale4Data = A6;
+  int _scale4Clock = A11;  
+#endif
+  int _tempData = 4;
+  int _tempPower = 3;
 #endif
 };
 
@@ -108,15 +146,25 @@ constexpr auto PARAM_PIN_SCALE1_DATA = "pin-scale1-data";
 constexpr auto PARAM_PIN_SCALE1_CLOCK = "pin-scale1-clock";
 constexpr auto PARAM_PIN_SCALE2_DATA = "pin-scale2-data";
 constexpr auto PARAM_PIN_SCALE2_CLOCK = "pin-scale2-clock";
+#if CFG_SCALECOUNT > 2
+constexpr auto PARAM_PIN_SCALE3_DATA = "pin-scale3-data";
+constexpr auto PARAM_PIN_SCALE3_CLOCK = "pin-scale3-clock";
+#endif
+#if CFG_SCALECOUNT > 3
+constexpr auto PARAM_PIN_SCALE4_DATA = "pin-scale4-data";
+constexpr auto PARAM_PIN_SCALE4_CLOCK = "pin-scale4-clock";
+#endif
 constexpr auto PARAM_PIN_TEMP_DATA = "pin-temp-data";
 constexpr auto PARAM_PIN_TEMP_POWER = "pin-temp-power";
 
 constexpr auto WEIGHT_KG = "kg";
 constexpr auto WEIGHT_LBS = "lbs";
 
+constexpr auto VOLUME_ML = "ml";
 constexpr auto VOLUME_CL = "cl";
 constexpr auto VOLUME_US = "us-oz";
-constexpr auto VOLUME_UK = "uk-oz";
+constexpr auto VOLUME_UK = "uk-pint";
+constexpr auto VOLUME_UKOZ = "uk-oz";
 
 enum DisplayLayoutType {
   Default = 0,
@@ -142,19 +190,14 @@ class KegConfig : public BaseConfig {
   String _brewfatherUserKey = "";
   String _brewfatherApiKey = "";
 
-  String _brewspyToken[2] = {"", ""};
+
 
   DisplayLayoutType _displayLayout = DisplayLayoutType::Default;
   TempSensorType _tempSensor = TempSensorType::SensorDS18B20;
   ScaleSensorType _scaleSensor = ScaleSensorType::ScaleHX711;
   DisplayDriverType _displayDriver = DisplayDriverType::OLED_1306;
 
-  float _scaleFactor[2] = {0, 0};
-  int32_t _scaleOffset[2] = {0, 0};
-  float _kegWeight[2] = {4, 4};          // Weight in kg
-  float _kegVolume[2] = {19, 19};        // Weight in liters
-  float _glassVolume[2] = {0.40, 0.40};  // Volume in liters
-  BeerInfo _beer[2];
+
 
   float _scaleDeviationIncreaseValue = 0.4;  // kg
   float _scaleDeviationDecreaseValue = 0.1;  // kg
@@ -162,7 +205,34 @@ class KegConfig : public BaseConfig {
   uint32_t _scaleStableCount = 8;
   int _scaleReadCount = 3;
   int _scaleReadCountCalibration = 30;
+#if CFG_SCALECOUNT == 2
   String _scaleTempCompensationFormula[2] = {"", ""};
+  String _brewspyToken[2] = {"", ""};
+  float _scaleFactor[2] = {0, 0};
+  int32_t _scaleOffset[2] = {0, 0};
+  float _kegWeight[2] = {4, 4};          // Weight in kg
+  float _kegVolume[2] = {19, 19};        // Weight in liters
+  float _glassVolume[2] = {0.40, 0.40};  // Volume in liters
+  BeerInfo _beer[2];  
+#elif CFG_SCALECOUNT == 3
+  String _scaleTempCompensationFormula[3] = {"", "", ""};
+    String _brewspyToken[3] = {"", ""};
+    float _scaleFactor[3] = {0, 0, 0};
+    int32_t _scaleOffset[3] = {0, 0, 0};
+    float _kegWeight[3] = {4, 4, 4};          // Weight in kg
+    float _kegVolume[3] = {19, 19, 19};        // Weight in liters
+    float _glassVolume[3] = {0.40, 0.40, 0.40};  // Volume in liters
+    BeerInfo _beer[3];
+#else
+  String _scaleTempCompensationFormula[4] = {"", "", "", ""};
+  String _brewspyToken[4] = {"", "", "", ""};
+  float _scaleFactor[4] = {0, 0, 0, 0};
+  int32_t _scaleOffset[4] = {0, 0, 0, 0};
+  float _kegWeight[4] = {4, 4, 4, 4};          // Weight in kg
+  float _kegVolume[4] = {19, 19, 19, 19};        // Weight in liters
+  float _glassVolume[4] = {0.40, 0.40, 0.40, 0.40};  // Volume in liters
+  BeerInfo _beer[4];  
+#endif
 
   LevelDetectionType _levelDetection = LevelDetectionType::STATS;
   HardwareInfo _pins;
@@ -254,12 +324,15 @@ class KegConfig : public BaseConfig {
   }
 
   const char* getVolumeUnit() { return _volumeUnit.c_str(); }
+  bool isVolumeUnitML() { return _volumeUnit.equals(VOLUME_ML); }
   bool isVolumeUnitCL() { return _volumeUnit.equals(VOLUME_CL); }
   bool isVolumeUnitUSOZ() { return _volumeUnit.equals(VOLUME_US); }
-  bool isVolumeUnitUKOZ() { return _volumeUnit.equals(VOLUME_UK); }
+  bool isVolumeUnitUKOZ() { return _volumeUnit.equals(VOLUME_UKOZ); }
+  bool isVolumeUnitUKPint() { return _volumeUnit.equals(VOLUME_UK); }
   void setVolumeUnit(String s) {
     if (!s.compareTo(VOLUME_CL) || !s.compareTo(VOLUME_UK) ||
-        !s.compareTo(VOLUME_US)) {
+        !s.compareTo(VOLUME_US) || !s.compareTo(VOLUME_ML)
+        || !s.compareTo(VOLUME_UKOZ)) {
       _volumeUnit = s;
       _saveNeeded = true;
     }
@@ -466,6 +539,34 @@ class KegConfig : public BaseConfig {
     _pins._scale2Clock = pin;
     _saveNeeded = true;
   }
+
+#if CFG_SCALECOUNT > 2
+  int getPinScale3Data() { return _pins._scale3Data; }
+  void setPinScale3Data(int pin) {
+    _pins._scale3Data = pin;
+    _saveNeeded = true;
+  }
+  int getPinScale3Clock() { return _pins._scale3Clock; }
+  void setPinScale3Clock(int pin) {
+    _pins._scale3Clock = pin;
+    _saveNeeded = true;
+  }
+#endif  
+
+#if CFG_SCALECOUNT > 3
+  int getPinScale4Data() { return _pins._scale4Data; }
+  void setPinScale4Data(int pin) {
+    _pins._scale4Data = pin;
+    _saveNeeded = true;
+  }
+  int getPinScale4Clock() { return _pins._scale4Clock; }
+  void setPinScale4Clock(int pin) {
+    _pins._scale4Clock = pin;
+    _saveNeeded = true;
+  }
+#endif
+  
+
 
   int getPinTempData() { return _pins._tempData; }
   void setPinTempData(int pin) {

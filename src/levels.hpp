@@ -38,15 +38,33 @@ constexpr auto LEVELS_FILEMAXSIZE = 2000;
 
 class LevelDetection {
  private:
+ #if CFG_SCALECOUNT == 2
   Stability _stability[2];
   RawLevelDetection* _rawLevel[2] = {0, 0};
   StatsLevelDetection* _statsLevel[2] = {0, 0};
+#elif CFG_SCALECOUNT == 3
+  Stability _stability[3];
+  RawLevelDetection* _rawLevel[3] = {0, 0, 0};
+  StatsLevelDetection* _statsLevel[3] = {0, 0, 0};
+#else
+  Stability _stability[4];
+  RawLevelDetection* _rawLevel[4] = {0, 0, 0, 0};
+  StatsLevelDetection* _statsLevel[4] = {0, 0, 0, 0};
+#endif
 
   LevelDetection(const LevelDetection&) = delete;
   void operator=(const LevelDetection&) = delete;
 
+#if CFG_SCALECOUNT == 2
   void logLevels(float kegVolume1, float kegVolume2, float pourVolume1,
                  float pourVolume2);
+#elif CFG_SCALECOUNT == 3
+void logLevels(float kegVolume1, float kegVolume2, float kegVolume3, float pourVolume1,
+                 float pourVolume2,float pourVolume3);
+#elif CFG_SCALECOUNT == 4     
+void logLevels(float kegVolume1, float kegVolume2, float kegVolume3, float kegVolume4, float pourVolume1,
+                 float pourVolume2,float pourVolume3, float pourVolume4);            
+                 #endif
   void pushKegUpdate(UnitIndex idx, float stableVol, float pourVol,
                      float glasses);
   void pushPourUpdate(UnitIndex idx, float stableVol, float pourVol);

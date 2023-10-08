@@ -76,6 +76,16 @@ void setup() {
   myConfig.setScaleOffset(UnitIndex::U1, 1); 
   myConfig.setScaleOffset(UnitIndex::U2, 1); 
 
+  #if CFG_SCALECOUNT > 2
+    myConfig.setScaleFactor(UnitIndex::U3, 1); 
+    myConfig.setScaleOffset(UnitIndex::U3, 1); 
+  #endif
+
+  #if CFG_SCALECOUNT > 3
+    myConfig.setScaleFactor(UnitIndex::U4, 1); 
+    myConfig.setScaleOffset(UnitIndex::U4, 1); 
+  #endif
+
   myScale.setup();
 
   myTemp.setup();
@@ -116,18 +126,47 @@ void loop() {
   myScale.loop(UnitIndex::U1);
   myScale.loop(UnitIndex::U2);
 
+  
+  #if CFG_SCALECOUNT > 2
+    myScale.loop(UnitIndex::U3); 
+  #endif
+
+
+  #if CFG_SCALECOUNT > 3
+    myScale.loop(UnitIndex::U4); 
+  #endif
+
   if (abs((int32_t)(millis() - loopMillis)) >
       loopInterval) {  // 2 seconds loop interval
     loopMillis = millis();
     loopCounter++;
 
     // Try to reconnect to scales if they are missing (6 seconds)
+     #if CFG_SCALECOUNT == 2
     if (!(loopCounter % 3)) {
       if (!myScale.isConnected(UnitIndex::U1) ||
           !myScale.isConnected(UnitIndex::U2)) {
         myScale.setup();  // Try to reconnect to scale
       }
     }
+    #elif CFG_SCALECOUNT == 3
+    if (!(loopCounter % 3)) {
+      if (!myScale.isConnected(UnitIndex::U1) ||
+          !myScale.isConnected(UnitIndex::U2) ||
+          !myScale.isConnected(UnitIndex::U3)) {
+        myScale.setup();  // Try to reconnect to scale
+      }
+    }
+    #else
+    if (!(loopCounter % 3)) {
+      if (!myScale.isConnected(UnitIndex::U1) ||
+          !myScale.isConnected(UnitIndex::U2) ||
+          !myScale.isConnected(UnitIndex::U3) ||
+          !myScale.isConnected(UnitIndex::U4)) {
+        myScale.setup();  // Try to reconnect to scale
+      }
+    }
+    #endif
 
     // The temp sensor should not be read too often. Reading every 4 seconds.
     if (!(loopCounter % 1)) {

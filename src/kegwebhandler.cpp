@@ -59,6 +59,28 @@ constexpr auto PARAM_LAST_POUR_WEIGHT2 = "last-pour-weight2";
 constexpr auto PARAM_LAST_POUR_VOLUME1 = "last-pour-volume1";
 constexpr auto PARAM_LAST_POUR_VOLUME2 = "last-pour-volume2";
 
+#if CFG_SCALECOUNT > 2
+constexpr auto PARAM_SCALE_WEIGHT3 = "scale-weight3";
+constexpr auto PARAM_BEER_WEIGHT3 = "beer-weight3";
+constexpr auto PARAM_BEER_VOLUME3 = "beer-volume3";
+constexpr auto PARAM_SCALE_RAW3 = "scale-raw3";
+constexpr auto PARAM_GLASS3 = "glass3";
+constexpr auto PARAM_SCALE_STABLE_WEIGHT3 = "scale-stable-weight3";
+constexpr auto PARAM_LAST_POUR_WEIGHT3 = "last-pour-weight3";
+constexpr auto PARAM_LAST_POUR_VOLUME3 = "last-pour-volume3";
+#endif
+
+#if CFG_SCALECOUNT > 3
+constexpr auto PARAM_SCALE_WEIGHT4 = "scale-weight4";
+constexpr auto PARAM_BEER_WEIGHT4 = "beer-weight4";
+constexpr auto PARAM_BEER_VOLUME4 = "beer-volume4";
+constexpr auto PARAM_SCALE_RAW4 = "scale-raw4";
+constexpr auto PARAM_GLASS4 = "glass4";
+constexpr auto PARAM_SCALE_STABLE_WEIGHT4 = "scale-stable-weight4";
+constexpr auto PARAM_LAST_POUR_WEIGHT4 = "last-pour-weight4";
+constexpr auto PARAM_LAST_POUR_VOLUME4 = "last-pour-volume4";
+#endif
+
 #if defined(USE_ASYNC_WEB)
 KegWebHandler::KegWebHandler(KegConfig* config)
     : BaseAsyncWebHandler(config, JSON_BUFFER) {
@@ -131,14 +153,14 @@ void KegWebHandler::webHandleBrewspy(WS_PARAM) {
 void KegWebHandler::webScale(WS_PARAM) {
   Log.notice(F("WEB : webServer callback /api/scale." CR));
 
-  DynamicJsonDocument doc(500);
+  DynamicJsonDocument doc(1000);
   populateScaleJson(doc);
 
   doc[PARAM_WEIGHT_UNIT] = myConfig.getWeightUnit();
   doc[PARAM_VOLUME_UNIT] = myConfig.getVolumeUnit();
 
   String out;
-  out.reserve(500);
+  out.reserve(1000);
   serializeJson(doc, out);
   doc.clear();
   WS_SEND(200, "application/json", out.c_str());
@@ -147,13 +169,32 @@ void KegWebHandler::webScale(WS_PARAM) {
 void KegWebHandler::webScaleTare(WS_PARAM) {
   UnitIndex idx;
 
+#if CFG_SCALECOUNT == 2
   // Request will contain 1 or 2, but we need 0 or 1 for indexing.
   if (WS_REQ_ARG(PARAM_SCALE).toInt() == 1)
     idx = UnitIndex::U1;
   else
     idx = UnitIndex::U2;
+#elif CFG_SCALECOUNT == 3
+  if (WS_REQ_ARG(PARAM_SCALE).toInt() == 1)
+    idx = UnitIndex::U1;
+  else if (WS_REQ_ARG(PARAM_SCALE).toInt() == 2)
+    idx = UnitIndex::U2;
+  else
+    idx = UnitIndex::U3;
+#else
+  if (WS_REQ_ARG(PARAM_SCALE).toInt() == 1)
+    idx = UnitIndex::U1;
+  else if (WS_REQ_ARG(PARAM_SCALE).toInt() == 2)
+    idx = UnitIndex::U2;
+  else if (WS_REQ_ARG(PARAM_SCALE).toInt() == 3)
+    idx = UnitIndex::U3;
+  else
+    idx = UnitIndex::U4;
+#endif
 
-  Log.notice(F("WEB : webServer callback /api/scale/tare." CR));
+  Log.notice(F("WEB : webServer callback /api/scale/tare. %d : %d" CR), idx, WS_REQ_ARG(PARAM_SCALE).toInt());
+  
 
   myScale.scheduleTare(idx);
   WS_SEND(200, "text/plain", "");
@@ -163,11 +204,29 @@ void KegWebHandler::webScaleFactor(WS_PARAM) {
   float weight = convertIncomingWeight(WS_REQ_ARG(PARAM_WEIGHT).toFloat());
   UnitIndex idx;
 
+#if CFG_SCALECOUNT == 2
   // Request will contain 1 or 2, but we need 0 or 1 for indexing.
   if (WS_REQ_ARG(PARAM_SCALE).toInt() == 1)
     idx = UnitIndex::U1;
   else
     idx = UnitIndex::U2;
+#elif CFG_SCALECOUNT == 3
+  if (WS_REQ_ARG(PARAM_SCALE).toInt() == 1)
+    idx = UnitIndex::U1;
+  else if (WS_REQ_ARG(PARAM_SCALE).toInt() == 2)
+    idx = UnitIndex::U2;
+  else
+    idx = UnitIndex::U3;
+#else
+  if (WS_REQ_ARG(PARAM_SCALE).toInt() == 1)
+    idx = UnitIndex::U1;
+  else if (WS_REQ_ARG(PARAM_SCALE).toInt() == 2)
+    idx = UnitIndex::U2;
+  else if (WS_REQ_ARG(PARAM_SCALE).toInt() == 3)
+    idx = UnitIndex::U3;
+  else
+    idx = UnitIndex::U4;
+#endif
 
   Log.notice(
       F("WEB : webServer callback /api/scale/factor, weight=%Fkg [%d]." CR),
@@ -181,6 +240,7 @@ void KegWebHandler::populateScaleJson(DynamicJsonDocument& doc) {
   // This will return the raw weight so that that we get the actual values.
   doc[PARAM_SCALE_FACTOR1] = myConfig.getScaleFactor(UnitIndex::U1);
   doc[PARAM_SCALE_FACTOR2] = myConfig.getScaleFactor(UnitIndex::U2);
+
   if (myScale.isConnected(UnitIndex::U1)) {
     doc[PARAM_SCALE_WEIGHT1] = serialized(
         String(convertOutgoingWeight(
@@ -188,6 +248,7 @@ void KegWebHandler::populateScaleJson(DynamicJsonDocument& doc) {
                myConfig.getWeightPrecision()));
     doc[PARAM_SCALE_RAW1] = myScale.readLastRaw(UnitIndex::U1);
     doc[PARAM_SCALE_OFFSET1] = myConfig.getScaleOffset(UnitIndex::U1);
+  
     doc[PARAM_BEER_WEIGHT1] = serialized(String(
         convertOutgoingWeight(myLevelDetection.getBeerWeight(UnitIndex::U1)),
         myConfig.getWeightPrecision()));
@@ -195,6 +256,23 @@ void KegWebHandler::populateScaleJson(DynamicJsonDocument& doc) {
         convertOutgoingVolume(myLevelDetection.getBeerVolume(UnitIndex::U1)),
         myConfig.getVolumePrecision()));
   }
+
+  if (myLevelDetection.hasStableWeight(UnitIndex::U1)) {
+    doc[PARAM_SCALE_STABLE_WEIGHT1] = serialized(
+        String(convertOutgoingWeight(
+                   myLevelDetection.getTotalStableWeight(UnitIndex::U1)),
+               myConfig.getWeightPrecision()));
+  }
+
+  if (myLevelDetection.hasPourWeight(UnitIndex::U1)) {
+    doc[PARAM_LAST_POUR_WEIGHT1] = serialized(String(
+        convertOutgoingWeight(myLevelDetection.getPourWeight(UnitIndex::U1)),
+        myConfig.getWeightPrecision()));
+    doc[PARAM_LAST_POUR_VOLUME1] = serialized(String(
+        convertOutgoingVolume(myLevelDetection.getPourVolume(UnitIndex::U1)),
+        myConfig.getVolumePrecision()));
+  }  
+
 
   if (myScale.isConnected(UnitIndex::U2)) {
     doc[PARAM_SCALE_WEIGHT2] = serialized(
@@ -211,27 +289,12 @@ void KegWebHandler::populateScaleJson(DynamicJsonDocument& doc) {
         myConfig.getVolumePrecision()));
   }
 
-  if (myLevelDetection.hasStableWeight(UnitIndex::U1)) {
-    doc[PARAM_SCALE_STABLE_WEIGHT1] = serialized(
-        String(convertOutgoingWeight(
-                   myLevelDetection.getTotalStableWeight(UnitIndex::U1)),
-               myConfig.getWeightPrecision()));
-  }
 
   if (myLevelDetection.hasStableWeight(UnitIndex::U2)) {
     doc[PARAM_SCALE_STABLE_WEIGHT2] = serialized(
         String(convertOutgoingWeight(
                    myLevelDetection.getTotalStableWeight(UnitIndex::U2)),
                myConfig.getWeightPrecision()));
-  }
-
-  if (myLevelDetection.hasPourWeight(UnitIndex::U1)) {
-    doc[PARAM_LAST_POUR_WEIGHT1] = serialized(String(
-        convertOutgoingWeight(myLevelDetection.getPourWeight(UnitIndex::U1)),
-        myConfig.getWeightPrecision()));
-    doc[PARAM_LAST_POUR_VOLUME1] = serialized(String(
-        convertOutgoingVolume(myLevelDetection.getPourVolume(UnitIndex::U1)),
-        myConfig.getVolumePrecision()));
   }
 
   if (myLevelDetection.hasPourWeight(UnitIndex::U2)) {
@@ -242,6 +305,78 @@ void KegWebHandler::populateScaleJson(DynamicJsonDocument& doc) {
         convertOutgoingVolume(myLevelDetection.getPourVolume(UnitIndex::U2)),
         myConfig.getVolumePrecision()));
   }
+
+  #if CFG_SCALECOUNT > 2
+  doc[PARAM_SCALE_FACTOR3] = myConfig.getScaleFactor(UnitIndex::U3);
+
+
+  if (myScale.isConnected(UnitIndex::U3)) {
+    doc[PARAM_SCALE_WEIGHT3] = serialized(
+        String(convertOutgoingWeight(
+                   myLevelDetection.getTotalRawWeight(UnitIndex::U3)),
+               myConfig.getWeightPrecision()));
+    doc[PARAM_SCALE_RAW3] = myScale.readLastRaw(UnitIndex::U3);
+    doc[PARAM_SCALE_OFFSET3] = myConfig.getScaleOffset(UnitIndex::U3);
+    doc[PARAM_BEER_WEIGHT3] = serialized(String(
+        convertOutgoingWeight(myLevelDetection.getBeerWeight(UnitIndex::U3)),
+        myConfig.getWeightPrecision()));
+    doc[PARAM_BEER_VOLUME3] = serialized(String(
+        convertOutgoingVolume(myLevelDetection.getBeerVolume(UnitIndex::U3)),
+        myConfig.getVolumePrecision()));
+  }
+
+
+  if (myLevelDetection.hasStableWeight(UnitIndex::U3)) {
+    doc[PARAM_SCALE_STABLE_WEIGHT3] = serialized(
+        String(convertOutgoingWeight(
+                   myLevelDetection.getTotalStableWeight(UnitIndex::U3)),
+               myConfig.getWeightPrecision()));
+  }
+
+  if (myLevelDetection.hasPourWeight(UnitIndex::U3)) {
+    doc[PARAM_LAST_POUR_WEIGHT3] = serialized(String(
+        convertOutgoingWeight(myLevelDetection.getPourWeight(UnitIndex::U3)),
+        myConfig.getWeightPrecision()));
+    doc[PARAM_LAST_POUR_VOLUME3] = serialized(String(
+        convertOutgoingVolume(myLevelDetection.getPourVolume(UnitIndex::U3)),
+        myConfig.getVolumePrecision()));  
+  }
+#endif
+#if CFG_SCALECOUNT > 3
+  
+  if (myScale.isConnected(UnitIndex::U4)) {
+    doc[PARAM_SCALE_WEIGHT4] = serialized(
+        String(convertOutgoingWeight(
+                   myLevelDetection.getTotalRawWeight(UnitIndex::U4)),
+               myConfig.getWeightPrecision()));
+    doc[PARAM_SCALE_RAW4] = myScale.readLastRaw(UnitIndex::U4);
+    doc[PARAM_SCALE_OFFSET4] = myConfig.getScaleOffset(UnitIndex::U4);
+    doc[PARAM_BEER_WEIGHT4] = serialized(String(
+        convertOutgoingWeight(myLevelDetection.getBeerWeight(UnitIndex::U4)),
+        myConfig.getWeightPrecision()));
+    doc[PARAM_BEER_VOLUME4] = serialized(String(
+        convertOutgoingVolume(myLevelDetection.getBeerVolume(UnitIndex::U4)),
+        myConfig.getVolumePrecision()));
+  }
+
+
+  if (myLevelDetection.hasStableWeight(UnitIndex::U4)) {
+    doc[PARAM_SCALE_STABLE_WEIGHT4] = serialized(
+        String(convertOutgoingWeight(
+                   myLevelDetection.getTotalStableWeight(UnitIndex::U4)),
+               myConfig.getWeightPrecision()));
+  }
+
+  if (myLevelDetection.hasPourWeight(UnitIndex::U4)) {
+    doc[PARAM_LAST_POUR_WEIGHT4] = serialized(String(
+        convertOutgoingWeight(myLevelDetection.getPourWeight(UnitIndex::U4)),
+        myConfig.getWeightPrecision()));
+    doc[PARAM_LAST_POUR_VOLUME4] = serialized(String(
+        convertOutgoingVolume(myLevelDetection.getPourVolume(UnitIndex::U4)),
+        myConfig.getVolumePrecision()));
+  }
+#endif
+
 
 #if LOG_LEVEL == 6
   serializeJson(doc, Serial);
@@ -279,15 +414,40 @@ void KegWebHandler::webStatus(WS_PARAM) {
     doc[PARAM_GLASS1] = serialized(
         String(myLevelDetection.getNoStableGlasses(UnitIndex::U1), 1));
   }
+  doc[PARAM_KEG_VOLUME1] =
+      convertOutgoingVolume(myConfig.getKegVolume(UnitIndex::U1));
+
+
   if (myLevelDetection.hasStableWeight(UnitIndex::U2)) {
     doc[PARAM_GLASS2] = serialized(
         String(myLevelDetection.getNoStableGlasses(UnitIndex::U2), 1));
   }
 
-  doc[PARAM_KEG_VOLUME1] =
-      convertOutgoingVolume(myConfig.getKegVolume(UnitIndex::U1));
   doc[PARAM_KEG_VOLUME2] =
       convertOutgoingVolume(myConfig.getKegVolume(UnitIndex::U2));
+
+#if CFG_SCALECOUNT > 2
+
+  if (myLevelDetection.hasStableWeight(UnitIndex::U3))
+  {
+    doc[PARAM_GLASS3] = serialized(
+        String(myLevelDetection.getNoStableGlasses(UnitIndex::U3), 1));
+  }
+
+  doc[PARAM_KEG_VOLUME3] =
+      convertOutgoingVolume(myConfig.getKegVolume(UnitIndex::U3));
+#endif
+
+#if CFG_SCALECOUNT > 3
+  if (myLevelDetection.hasStableWeight(UnitIndex::U4))
+  {
+    doc[PARAM_GLASS4] = serialized(
+        String(myLevelDetection.getNoStableGlasses(UnitIndex::U4), 1));
+  }
+
+  doc[PARAM_KEG_VOLUME4] =
+      convertOutgoingVolume(myConfig.getKegVolume(UnitIndex::U4));
+#endif
 
   float f = myTemp.getLastTempC();
 
@@ -368,6 +528,59 @@ void KegWebHandler::webStability(WS_PARAM) {
     doc[PARAM_STABILITY_UBIASDEV2] = stability2->unbiasedStdev();
   }
 
+#if CFG_SCALECOUNT > 2
+  constexpr auto PARAM_STABILITY_COUNT3 = "stability-count3";
+  constexpr auto PARAM_STABILITY_SUM3 = "stability-sum3";
+  constexpr auto PARAM_STABILITY_MIN3 = "stability-min3";
+  constexpr auto PARAM_STABILITY_MAX3 = "stability-max3";
+  constexpr auto PARAM_STABILITY_AVE3 = "stability-ave3";
+  constexpr auto PARAM_STABILITY_VAR3 = "stability-var3";
+  constexpr auto PARAM_STABILITY_POPDEV3 = "stability-popdev3";
+  constexpr auto PARAM_STABILITY_UBIASDEV3 = "stability-ubiasdev3";
+
+  Stability *stability3 = myLevelDetection.getStability(UnitIndex::U3);
+
+  if (stability3->count() > 1)
+  {
+    doc[PARAM_STABILITY_COUNT3] = stability3->count();
+    doc[PARAM_STABILITY_SUM3] = stability3->sum();
+    doc[PARAM_STABILITY_MIN3] = stability3->min();
+    doc[PARAM_STABILITY_MAX3] = stability3->max();
+    doc[PARAM_STABILITY_AVE3] = stability3->average();
+    doc[PARAM_STABILITY_VAR3] = stability3->variance();
+    doc[PARAM_STABILITY_POPDEV3] = stability3->popStdev();
+    doc[PARAM_STABILITY_UBIASDEV3] = stability3->unbiasedStdev();
+  }
+
+#endif
+
+#if CFG_SCALECOUNT > 3
+  constexpr auto PARAM_STABILITY_COUNT4 = "stability-count4";
+  constexpr auto PARAM_STABILITY_SUM4 = "stability-sum4";
+  constexpr auto PARAM_STABILITY_MIN4 = "stability-min4";
+  constexpr auto PARAM_STABILITY_MAX4 = "stability-max4";
+  constexpr auto PARAM_STABILITY_AVE4 = "stability-ave4";
+  constexpr auto PARAM_STABILITY_VAR4 = "stability-var4";
+  constexpr auto PARAM_STABILITY_POPDEV4 = "stability-popdev4";
+  constexpr auto PARAM_STABILITY_UBIASDEV4 = "stability-ubiasdev4";
+
+  Stability *stability4 = myLevelDetection.getStability(UnitIndex::U4);
+
+  if (stability4->count() > 1)
+  {
+    doc[PARAM_STABILITY_COUNT4] = stability4->count();
+    doc[PARAM_STABILITY_SUM4] = stability4->sum();
+    doc[PARAM_STABILITY_MIN4] = stability4->min();
+    doc[PARAM_STABILITY_MAX4] = stability4->max();
+    doc[PARAM_STABILITY_AVE4] = stability4->average();
+    doc[PARAM_STABILITY_VAR4] = stability4->variance();
+    doc[PARAM_STABILITY_POPDEV4] = stability4->popStdev();
+    doc[PARAM_STABILITY_UBIASDEV4] = stability4->unbiasedStdev();
+  }
+
+#endif
+
+
   constexpr auto PARAM_LEVEL_RAW1 = "level-raw1";
   constexpr auto PARAM_LEVEL_RAW2 = "level-raw2";
   constexpr auto PARAM_LEVEL_KALMAN1 = "level-kalman1";
@@ -394,6 +607,39 @@ void KegWebHandler::webStability(WS_PARAM) {
   if (myLevelDetection.getStatsDetection(UnitIndex::U2)->hasStableValue())
     doc[PARAM_LEVEL_STATISTIC2] =
         myLevelDetection.getStatsDetection(UnitIndex::U2)->getStableValue();
+
+#if CFG_SCALECOUNT > 2
+  constexpr auto PARAM_LEVEL_RAW3 = "level-raw3";
+  constexpr auto PARAM_LEVEL_KALMAN3 = "level-kalman3";
+  constexpr auto PARAM_LEVEL_STATISTIC3 = "level-stable3";
+
+  if (myLevelDetection.getRawDetection(UnitIndex::U3)->hasRawValue())
+    doc[PARAM_LEVEL_RAW3] =
+        myLevelDetection.getRawDetection(UnitIndex::U3)->getRawValue();
+  if (myLevelDetection.getRawDetection(UnitIndex::U3)->hasKalmanValue())
+    doc[PARAM_LEVEL_KALMAN3] =
+        myLevelDetection.getRawDetection(UnitIndex::U3)->getKalmanValue();
+  if (myLevelDetection.getStatsDetection(UnitIndex::U3)->hasStableValue())
+    doc[PARAM_LEVEL_STATISTIC3] =
+        myLevelDetection.getStatsDetection(UnitIndex::U3)->getStableValue();
+#endif
+
+#if CFG_SCALECOUNT > 3
+  constexpr auto PARAM_LEVEL_RAW4 = "level-raw4";
+  constexpr auto PARAM_LEVEL_KALMAN4 = "level-kalman4";
+  constexpr auto PARAM_LEVEL_STATISTIC4 = "level-stable4";
+
+  if (myLevelDetection.getRawDetection(UnitIndex::U4)->hasRawValue())
+    doc[PARAM_LEVEL_RAW4] =
+        myLevelDetection.getRawDetection(UnitIndex::U4)->getRawValue();
+  if (myLevelDetection.getRawDetection(UnitIndex::U4)->hasKalmanValue())
+    doc[PARAM_LEVEL_KALMAN4] =
+        myLevelDetection.getRawDetection(UnitIndex::U4)->getKalmanValue();
+  if (myLevelDetection.getStatsDetection(UnitIndex::U4)->hasStableValue())
+    doc[PARAM_LEVEL_STATISTIC4] =
+        myLevelDetection.getStatsDetection(UnitIndex::U4)->getStableValue();
+#endif
+
 
   float f = myTemp.getLastTempC();
 
@@ -433,11 +679,20 @@ void KegWebHandler::webReset(WS_PARAM) {
   }
 }
 
-void KegWebHandler::webStabilityClear(WS_PARAM) {
+void KegWebHandler::webStabilityClear(WS_PARAM)
+{
   Log.notice(F("WEB : webServer callback /api/stability/clear." CR));
 
   myLevelDetection.getStability(UnitIndex::U1)->clear();
   myLevelDetection.getStability(UnitIndex::U2)->clear();
+
+#if CFG_SCALECOUNT > 2
+  myLevelDetection.getStability(UnitIndex::U3)->clear();
+#endif
+
+#if CFG_SCALECOUNT > 3
+  myLevelDetection.getStability(UnitIndex::U4)->clear();
+#endif
   WS_SEND(200, "application/json", "{}");
 }
 

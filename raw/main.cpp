@@ -56,12 +56,28 @@ void setup() {
   myConfig.setBrewspyToken(UnitIndex::U1, "");
   myConfig.setBrewspyToken(UnitIndex::U1, "");
 
+  #if CFG_SCALECOUNT > 2
+    myConfig.setBrewspyToken(UnitIndex::U3, "");
+  #endif
+
+  #if CFG_SCALECOUNT > 3
+    myConfig.setBrewspyToken(UnitIndex::U4, "");
+  #endif
+
   String formula = "";
   // String formula = "weight*(1.0-0.025*(tempC-3.0))";
   // String formula = "weight*(1+(0.004*(tempC-5)))";
   // String formula = "weight-(1+0.004*(tempC-5))";
   myConfig.setScaleTempCompensationFormula(UnitIndex::U1, formula);
   myConfig.setScaleTempCompensationFormula(UnitIndex::U2, formula);
+
+  #if CFG_SCALECOUNT > 2
+    myConfig.setScaleTempCompensationFormula(UnitIndex::U3, formula);
+  #endif
+
+  #if CFG_SCALECOUNT > 3
+    myConfig.setScaleTempCompensationFormula(UnitIndex::U4, formula);
+  #endif  
 
   if (!myWifi.hasConfig() || myWifi.isDoubleResetDetected()) {
     Log.notice(

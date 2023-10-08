@@ -54,11 +54,21 @@ void KegConfig::createJson(DynamicJsonDocument& doc, bool skipSecrets) {
   doc[PARAM_BREWSPY_TOKEN1] = getBrewspyToken(UnitIndex::U1);
   doc[PARAM_BREWSPY_TOKEN2] = getBrewspyToken(UnitIndex::U2);
 
+  Log.noticeln(F("%s:%d"), __FILE__, __LINE__);
+
+  #if CFG_SCALECOUNT > 2
+     doc[PARAM_BREWSPY_TOKEN3] = getBrewspyToken(UnitIndex::U3);
+  #endif  
+  #if CFG_SCALECOUNT > 3
+     doc[PARAM_BREWSPY_TOKEN4] = getBrewspyToken(UnitIndex::U4);
+  #endif    
+
   doc[PARAM_SCALE_TEMP_FORMULA1] =
       getScaleTempCompensationFormula(UnitIndex::U1);
   doc[PARAM_SCALE_FACTOR1] =
       serialized(String(getScaleFactor(UnitIndex::U1), 5));
   doc[PARAM_SCALE_OFFSET1] = getScaleOffset(UnitIndex::U1);
+  
   doc[PARAM_KEG_WEIGHT1] =
       serialized(String(convertOutgoingWeight(getKegWeight(UnitIndex::U1)),
                         getWeightPrecision()));
@@ -67,7 +77,7 @@ void KegConfig::createJson(DynamicJsonDocument& doc, bool skipSecrets) {
       getWeightPrecision()));  // Dont convert this part (drop down in UI)
   doc[PARAM_GLASS_VOLUME1] = serialized(String(
       getGlassVolume(UnitIndex::U1),
-      getWeightPrecision()));  // Dont convert this part (drop down in UI)
+      3));  // Dont convert this part (drop down in UI)
   doc[PARAM_BEER_NAME1] = getBeerName(UnitIndex::U1);
   doc[PARAM_BEER_ABV1] = serialized(String(getBeerABV(UnitIndex::U1), 2));
   doc[PARAM_BEER_FG1] = serialized(String(getBeerFG(UnitIndex::U1), 2));
@@ -87,12 +97,57 @@ void KegConfig::createJson(DynamicJsonDocument& doc, bool skipSecrets) {
       getWeightPrecision()));  // Dont convert this part (drop down in UI)
   doc[PARAM_GLASS_VOLUME2] =
       serialized(String(getGlassVolume(UnitIndex::U2),
-                        2));  // Dont convert this part (drop down in UI)
+                       3));  // Dont convert this part (drop down in UI)
   doc[PARAM_BEER_NAME2] = getBeerName(UnitIndex::U2);
   doc[PARAM_BEER_ABV2] = serialized(String(getBeerABV(UnitIndex::U2), 2));
   doc[PARAM_BEER_FG2] = serialized(String(getBeerFG(UnitIndex::U2), 2));
   doc[PARAM_BEER_EBC2] = getBeerEBC(UnitIndex::U2);
   doc[PARAM_BEER_IBU2] = getBeerIBU(UnitIndex::U2);
+
+  Log.noticeln(F("%s:%d"), __FILE__, __LINE__);
+  #if CFG_SCALECOUNT > 2
+       doc[PARAM_SCALE_TEMP_FORMULA3] =
+      getScaleTempCompensationFormula(UnitIndex::U3);
+  doc[PARAM_SCALE_FACTOR3] =
+      serialized(String(getScaleFactor(UnitIndex::U3), 5));
+  doc[PARAM_SCALE_OFFSET3] = getScaleOffset(UnitIndex::U3);
+  doc[PARAM_KEG_WEIGHT3] =
+      serialized(String(convertOutgoingWeight(getKegWeight(UnitIndex::U3)),
+                        getWeightPrecision()));
+  doc[PARAM_KEG_VOLUME3] = serialized(String(
+      getKegVolume(UnitIndex::U3),
+      getWeightPrecision()));  // Dont convert this part (drop down in UI)
+  doc[PARAM_GLASS_VOLUME3] = serialized(String(
+      getGlassVolume(UnitIndex::U3),
+      3));  // Dont convert this part (drop down in UI)
+  doc[PARAM_BEER_NAME3] = getBeerName(UnitIndex::U3);
+  doc[PARAM_BEER_ABV3] = serialized(String(getBeerABV(UnitIndex::U3), 2));
+  doc[PARAM_BEER_FG3] = serialized(String(getBeerFG(UnitIndex::U3), 2));
+  doc[PARAM_BEER_EBC3] = getBeerEBC(UnitIndex::U3);
+  doc[PARAM_BEER_IBU3] = getBeerIBU(UnitIndex::U3);
+  #endif  
+Log.noticeln(F("%s:%d"), __FILE__, __LINE__);
+  #if CFG_SCALECOUNT > 3
+       doc[PARAM_SCALE_TEMP_FORMULA4] =
+      getScaleTempCompensationFormula(UnitIndex::U4);
+  doc[PARAM_SCALE_FACTOR4] =
+      serialized(String(getScaleFactor(UnitIndex::U4), 5));
+  doc[PARAM_SCALE_OFFSET4] = getScaleOffset(UnitIndex::U4);
+  doc[PARAM_KEG_WEIGHT4] =
+      serialized(String(convertOutgoingWeight(getKegWeight(UnitIndex::U4)),
+                        getWeightPrecision()));
+  doc[PARAM_KEG_VOLUME4] = serialized(String(
+      getKegVolume(UnitIndex::U4),
+      getWeightPrecision()));  // Dont convert this part (drop down in UI)
+  doc[PARAM_GLASS_VOLUME4] = serialized(String(
+      getGlassVolume(UnitIndex::U4),
+      getWeightPrecision()));  // Dont convert this part (drop down in UI)
+  doc[PARAM_BEER_NAME4] = getBeerName(UnitIndex::U4);
+  doc[PARAM_BEER_ABV4] = serialized(String(getBeerABV(UnitIndex::U4), 2));
+  doc[PARAM_BEER_FG4] = serialized(String(getBeerFG(UnitIndex::U4), 2));
+  doc[PARAM_BEER_EBC4] = getBeerEBC(UnitIndex::U4);
+  doc[PARAM_BEER_IBU4] = getBeerIBU(UnitIndex::U4);
+  #endif    
 
   doc[PARAM_SCALE_DEVIATION_INCREASE] =
       serialized(String(getScaleDeviationIncreaseValue(), 2));
@@ -112,7 +167,17 @@ void KegConfig::createJson(DynamicJsonDocument& doc, bool skipSecrets) {
   doc[PARAM_PIN_SCALE2_CLOCK] = getPinScale2Clock();
   doc[PARAM_PIN_TEMP_DATA] = getPinTempData();
   doc[PARAM_PIN_TEMP_POWER] = getPinTempPower();
+Log.noticeln(F("%s:%d"), __FILE__, __LINE__);
+    #if CFG_SCALECOUNT > 2
+  doc[PARAM_PIN_SCALE3_DATA] = getPinScale3Data();
+  doc[PARAM_PIN_SCALE3_CLOCK] = getPinScale3Clock();
+  #endif  
 
+    #if CFG_SCALECOUNT > 3
+  doc[PARAM_PIN_SCALE4_DATA] = getPinScale4Data();
+  doc[PARAM_PIN_SCALE4_CLOCK] = getPinScale4Clock();
+  #endif    
+Log.noticeln(F("%s:%d"), __FILE__, __LINE__);
 #if defined(ESP8266)
   doc[PARAM_PLATFORM] = "esp8266";
 #elif defined(ESP32S2)
@@ -147,6 +212,17 @@ void KegConfig::parseJson(DynamicJsonDocument& doc) {
     setBrewspyToken(UnitIndex::U1, doc[PARAM_BREWSPY_TOKEN1]);
   if (!doc[PARAM_BREWSPY_TOKEN2].isNull())
     setBrewspyToken(UnitIndex::U2, doc[PARAM_BREWSPY_TOKEN2]);
+
+#if CFG_SCALECOUNT > 2
+  if (!doc[PARAM_BREWSPY_TOKEN3].isNull())
+    setBrewspyToken(UnitIndex::U3, doc[PARAM_BREWSPY_TOKEN3]);
+#endif
+
+
+#if CFG_SCALECOUNT > 3
+  if (!doc[PARAM_BREWSPY_TOKEN4].isNull())
+    setBrewspyToken(UnitIndex::U4, doc[PARAM_BREWSPY_TOKEN3]);
+#endif
 
   if (!doc[PARAM_DISPLAY_LAYOUT].isNull())
     setDisplayLayoutType(doc[PARAM_DISPLAY_LAYOUT].as<int>());
@@ -222,6 +298,74 @@ void KegConfig::parseJson(DynamicJsonDocument& doc) {
   if (!doc[PARAM_BEER_FG2].isNull())
     setBeerFG(UnitIndex::U2, doc[PARAM_BEER_FG2].as<float>());
 
+#if CFG_SCALECOUNT > 2
+
+  if (!doc[PARAM_SCALE_TEMP_FORMULA3].isNull())
+    setScaleTempCompensationFormula(UnitIndex::U3,
+                                    doc[PARAM_SCALE_TEMP_FORMULA3]);
+  if (!doc[PARAM_SCALE_FACTOR3].isNull())
+    setScaleFactor(UnitIndex::U3, doc[PARAM_SCALE_FACTOR3].as<float>());
+  if (!doc[PARAM_SCALE_OFFSET3].isNull())
+    setScaleOffset(UnitIndex::U3, doc[PARAM_SCALE_OFFSET3].as<float>());
+  if (!doc[PARAM_KEG_WEIGHT3].isNull())
+    setKegWeight(UnitIndex::U3,
+                 convertIncomingWeight(doc[PARAM_KEG_WEIGHT3].as<float>()));
+  if (!doc[PARAM_KEG_VOLUME3].isNull())
+    setKegVolume(
+        UnitIndex::U3,
+        doc[PARAM_KEG_VOLUME3]
+            .as<float>()); // No need to convert this, always in Liters
+  if (!doc[PARAM_GLASS_VOLUME3].isNull())
+    setGlassVolume(
+        UnitIndex::U3,
+        doc[PARAM_GLASS_VOLUME3]
+            .as<float>()); // No need to convert this, always in Liters
+  if (!doc[PARAM_BEER_NAME3].isNull())
+    setBeerName(UnitIndex::U3, doc[PARAM_BEER_NAME3]);
+  if (!doc[PARAM_BEER_EBC3].isNull())
+    setBeerEBC(UnitIndex::U3, doc[PARAM_BEER_EBC3].as<int>());
+  if (!doc[PARAM_BEER_ABV3].isNull())
+    setBeerABV(UnitIndex::U3, doc[PARAM_BEER_ABV3].as<float>());
+  if (!doc[PARAM_BEER_IBU3].isNull())
+    setBeerIBU(UnitIndex::U3, doc[PARAM_BEER_IBU3].as<int>());
+  if (!doc[PARAM_BEER_FG3].isNull())
+    setBeerFG(UnitIndex::U3, doc[PARAM_BEER_FG3].as<float>());
+#endif
+
+#if CFG_SCALECOUNT > 3
+
+  if (!doc[PARAM_SCALE_TEMP_FORMULA4].isNull())
+    setScaleTempCompensationFormula(UnitIndex::U4,
+                                    doc[PARAM_SCALE_TEMP_FORMULA4]);
+  if (!doc[PARAM_SCALE_FACTOR4].isNull())
+    setScaleFactor(UnitIndex::U4, doc[PARAM_SCALE_FACTOR4].as<float>());
+  if (!doc[PARAM_SCALE_OFFSET4].isNull())
+    setScaleOffset(UnitIndex::U4, doc[PARAM_SCALE_OFFSET4].as<float>());
+  if (!doc[PARAM_KEG_WEIGHT4].isNull())
+    setKegWeight(UnitIndex::U4,
+                 convertIncomingWeight(doc[PARAM_KEG_WEIGHT4].as<float>()));
+  if (!doc[PARAM_KEG_VOLUME4].isNull())
+    setKegVolume(
+        UnitIndex::U4,
+        doc[PARAM_KEG_VOLUME4]
+            .as<float>());  // No need to convert this, always in Liters
+  if (!doc[PARAM_GLASS_VOLUME4].isNull())
+    setGlassVolume(
+        UnitIndex::U4,
+        doc[PARAM_GLASS_VOLUME4]
+            .as<float>());  // No need to convert this, always in Liters
+  if (!doc[PARAM_BEER_NAME4].isNull())
+    setBeerName(UnitIndex::U4, doc[PARAM_BEER_NAME4]);
+  if (!doc[PARAM_BEER_EBC4].isNull())
+    setBeerEBC(UnitIndex::U4, doc[PARAM_BEER_EBC4].as<int>());
+  if (!doc[PARAM_BEER_ABV4].isNull())
+    setBeerABV(UnitIndex::U4, doc[PARAM_BEER_ABV4].as<float>());
+  if (!doc[PARAM_BEER_IBU4].isNull())
+    setBeerIBU(UnitIndex::U4, doc[PARAM_BEER_IBU4].as<int>());
+  if (!doc[PARAM_BEER_FG4].isNull())
+    setBeerFG(UnitIndex::U4, doc[PARAM_BEER_FG4].as<float>());
+#endif
+
   if (!doc[PARAM_SCALE_DEVIATION_DECREASE].isNull())
     setScaleDeviationDecreaseValue(doc[PARAM_SCALE_DEVIATION_DECREASE]);
   if (!doc[PARAM_SCALE_DEVIATION_INCREASE].isNull())
@@ -252,6 +396,19 @@ void KegConfig::parseJson(DynamicJsonDocument& doc) {
   if (!doc[PARAM_PIN_TEMP_POWER].isNull())
     setPinTempPower(doc[PARAM_PIN_TEMP_POWER]);
 
+#if CFG_SCALECOUNT > 2
+  if (!doc[PARAM_PIN_SCALE3_DATA].isNull())
+    setPinScale3Data(doc[PARAM_PIN_SCALE3_DATA]);
+  if (!doc[PARAM_PIN_SCALE3_CLOCK].isNull())
+    setPinScale3Clock(doc[PARAM_PIN_SCALE3_CLOCK]);
+#endif
+
+#if CFG_SCALECOUNT > 3
+  if (!doc[PARAM_PIN_SCALE4_DATA].isNull())
+    setPinScale4Data(doc[PARAM_PIN_SCALE4_DATA]);
+  if (!doc[PARAM_PIN_SCALE4_CLOCK].isNull())
+    setPinScale4Clock(doc[PARAM_PIN_SCALE4_CLOCK]);
+#endif
   /*
   if (!doc[PARAM_KALMAN_ESTIMATION].isNull())
     setKalmanEstimation(doc[PARAM_KALMAN_ESTIMATION].as<float>());
@@ -285,10 +442,15 @@ float convertIncomingVolume(float v) {
 
   if (myConfig.isVolumeUnitCL())
     r = v * 100.0;
+  else if (myConfig.isVolumeUnitML())
+    r = v * 1000.0;
   else if (myConfig.isVolumeUnitUSOZ())
     r = convertUSOZtoCL(v);
+
+  else if (myConfig.isVolumeUnitUKOZ())
+    r = convertUKOZtoCL(v);    
   else
-    r = convertUKOZtoCL(v);
+    r = convertUKPinttoCL(v);
 
 #if LOG_LEVEL == 6
     // Log.verbose(F("CFG : Converting incoming volume %F to %F (%s)." CR), v,
@@ -309,6 +471,9 @@ float convertOutgoingWeight(float w) {
     // Log.verbose(F("CFG : Converting outgoing weight %F to %F (%s)." CR), w,
     // r, myConfig.getWeightUnit());
 #endif
+  if (isnan(r))
+    return 0.0f;
+
   return r;
 }
 
@@ -317,15 +482,22 @@ float convertOutgoingVolume(float v) {
 
   if (myConfig.isVolumeUnitCL())
     r = (v == 0.0 ? 0.0 : v * 100.0);
+  else if (myConfig.isVolumeUnitML())
+    r = (v == 0.0 ? 0.0 : v * 1000.0);
   else if (myConfig.isVolumeUnitUSOZ())
     r = convertCLtoUSOZ(v == 0.0 ? 0.0 : v * 100.0);
+  else if (myConfig.isVolumeUnitUKOZ())
+    r = convertCLtoUKOZ(v == 0.0 ? 0.0 : v * 100.0);    
   else
-    r = convertCLtoUKOZ(v == 0.0 ? 0.0 : v * 100.0);
+    r = convertCLtoUKPint(v == 0.0 ? 0.0 : v * 100.0);
 
 #if LOG_LEVEL == 6
     // Log.verbose(F("CFG : Converting outgoing volume %F to %F (%s)." CR), v,
     // r, myConfig.getVolumeUnit());
 #endif
+  if (isnan(r))
+    return 0.0f;
+
   return r;
 }
 

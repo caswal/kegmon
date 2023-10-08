@@ -41,12 +41,25 @@ class Scale {
     bool findFactor = false;
     float factorWeight = 0;
   };
-
+#if CFG_SCALECOUNT == 2
   HX711* _hxScale[2] = {0, 0};
   NAU7802* _nauScale[2] = {0, 0};
 
   Schedule _sched[2];
   int32_t _lastRaw[2] = {0, 0};
+  #elif CFG_SCALECOUNT == 3
+  HX711* _hxScale[3] = {0, 0, 0};
+  NAU7802* _nauScale[3] = {0, 0, 0};
+
+  Schedule _sched[3];
+  int32_t _lastRaw[3] = {0, 0, 0};
+  #else
+    HX711* _hxScale[4] = {0, 0, 0, 0};
+  NAU7802* _nauScale[4] = {0, 0, 0, 0};
+
+  Schedule _sched[4];
+  int32_t _lastRaw[4] = {0, 0, 0, 0};  
+  #endif
 
   Scale(const Scale&) = delete;
   void operator=(const Scale&) = delete;
@@ -71,6 +84,7 @@ class Scale {
         break;
     }
   }
+  public:
   int32_t readRaw(UnitIndex idx) {
     if (myConfig.getScaleSensorType() == ScaleSensorType::ScaleHX711)
       return readRawHX711(idx);
@@ -105,8 +119,13 @@ class Scale {
     }
   }
   void loop(UnitIndex idx);
-  void scheduleTare(UnitIndex idx) { _sched[idx].tare = true; }
+  void scheduleTare(UnitIndex idx) { 
+    Log.noticeln("ScheduledTare: %i", idx);
+    Log.noticeln(F("%s:%i"), __FILE__, __LINE__);
+    _sched[idx].tare = true;
+     }
   void scheduleFindFactor(UnitIndex idx, float weight) {
+    Log.noticeln(F("%s:%i"), __FILE__, __LINE__);
     _sched[idx].findFactor = true;
     _sched[idx].factorWeight = weight;
   }

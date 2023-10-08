@@ -68,6 +68,7 @@ void logStartup();
 void checkCoreDump();
 
 void setup() {
+  delay(500);
 #if defined(PERF_ENABLE)
   PerfLogging perf;
   perf.getInstance().setBaseConfig(&myConfig);
@@ -104,6 +105,14 @@ void setup() {
   // Set some default values when we run on the simulator
   myConfig.setScaleFactor(UnitIndex::U1, 1);
   myConfig.setScaleFactor(UnitIndex::U2, 1);
+
+  #if CFG_SCALECOUNT > 2
+    myConfig.setScaleFactor(UnitIndex::U3, 1);
+  #endif
+
+  #if CFG_SCALECOUNT > 3
+    myConfig.setScaleFactor(UnitIndex::U4, 1);
+  #endif  
 #endif
 
 #if defined(ESP8266)
@@ -177,6 +186,8 @@ void setup() {
   delay(3000);
 }
 
+UnitIndex scaleToUpdate = UnitIndex::U1;
+
 void loop() {
   if (!myWifi.isConnected()) myWifi.connect();
 
@@ -185,8 +196,14 @@ void loop() {
 #if defined(USE_ASYNC_WEB)
   mySerialWebSocket.loop();
 #endif
+
   myScale.loop(UnitIndex::U1);
   myScale.loop(UnitIndex::U2);
+
+
+#if CFG_SCALECOUNT > 2
+  myScale.loop(UnitIndex::U3);
+#endif
 
   if (abs((int32_t)(millis() - loopMillis)) >
       loopInterval) {  // 2 seconds loop interval
@@ -208,14 +225,55 @@ void loop() {
             UnitIndex::U2, myLevelDetection.getBeerStableVolume(UnitIndex::U2),
             myLevelDetection.getPourVolume(UnitIndex::U2),
             myLevelDetection.getNoStableGlasses(UnitIndex::U2), true);
+
+  #if CFG_SCALECOUNT > 2
+        if (myLevelDetection.hasStableWeight(UnitIndex::U3))
+        myPush.pushKegInformation(
+            UnitIndex::U3, myLevelDetection.getBeerStableVolume(UnitIndex::U3),
+            myLevelDetection.getPourVolume(UnitIndex::U3),
+            myLevelDetection.getNoStableGlasses(UnitIndex::U3), true);
+  #endif
+  #if CFG_SCALECOUNT > 3
+        if (myLevelDetection.hasStableWeight(UnitIndex::U4))
+        myPush.pushKegInformation(
+            UnitIndex::U4, myLevelDetection.getBeerStableVolume(UnitIndex::U4),
+            myLevelDetection.getPourVolume(UnitIndex::U4),
+            myLevelDetection.getNoStableGlasses(UnitIndex::U4), true);
+  #endif        
     }
 
     // Try to reconnect to scales if they are missing (60 seconds)
-    if (!(loopCounter % 30)) {
+    if (!(loopCounter % 30))
+    {
+#if CFG_SCALECOUNT == 2
+        if (!(loopCounter % 3))
+        {
+        if (!myScale.isConnected(UnitIndex::U1) ||
+            !myScale.isConnected(UnitIndex::U2))
+        {
+          myScale.setup(); // Try to reconnect to scale
+        }
+        }
+#elif CFG_SCALECOUNT == 3
+      if (!(loopCounter % 3))
+      {
+        if (!myScale.isConnected(UnitIndex::U1) ||
+            !myScale.isConnected(UnitIndex::U2) ||
+            !myScale.isConnected(UnitIndex::U3))
+        {
+          myScale.setup(); // Try to reconnect to scale
+        }
+      }
+#else
+    if (!(loopCounter % 3)) {
       if (!myScale.isConnected(UnitIndex::U1) ||
-          !myScale.isConnected(UnitIndex::U2)) {
+          !myScale.isConnected(UnitIndex::U2) ||
+          !myScale.isConnected(UnitIndex::U3) ||
+          !myScale.isConnected(UnitIndex::U4)) {
         myScale.setup();  // Try to reconnect to scale
       }
+    }
+#endif
     }
 
     // Try to reconnect to scales if they are missing (60 seconds)
@@ -247,6 +305,16 @@ void loop() {
     PERF_BEGIN("loop-scale-read2");
     myLevelDetection.update(UnitIndex::U2, myScale.read(UnitIndex::U2), t);
     PERF_END("loop-scale-read2");
+#if CFG_SCALECOUNT > 2
+    PERF_BEGIN("loop-scale-read3");
+    myLevelDetection.update(UnitIndex::U3, myScale.read(UnitIndex::U3), t);
+    PERF_END("loop-scale-read3");
+#endif
+#if CFG_SCALECOUNT > 3
+    PERF_BEGIN("loop-scale-read4");
+    myLevelDetection.update(UnitIndex::U4, myScale.read(UnitIndex::U4), t);
+    PERF_END("loop-scale-read4");
+#endif
 
     // Update screens
     PERF_BEGIN("loop-display-default");
@@ -302,6 +370,13 @@ void loop() {
         myLevelDetection.getStatsDetection(UnitIndex::U2)->getStableValue(),
         myLevelDetection.getStatsDetection(UnitIndex::U1)->getPourValue(),
         myLevelDetection.getStatsDetection(UnitIndex::U2)->getPourValue());
+        #if CFG_SCALECOUNT == 3 
+            Log.notice(
+        F("LOOP: Reading data raw3=%F,stable3=%F,pour3=%F" CR),
+        myLevelDetection.getRawDetection(UnitIndex::U3)->getRawValue(),
+        myLevelDetection.getStatsDetection(UnitIndex::U3)->getStableValue(),
+        myLevelDetection.getStatsDetection(UnitIndex::U3)->getPourValue());
+        #endif
 
 #if defined(ENABLE_INFLUX_DEBUG)
     // This part is used to send data to an influxdb in order to get data on

@@ -58,12 +58,6 @@ INCBIN_EXTERN(GraphHtm);
 INCBIN_EXTERN(BackupHtm);
 INCBIN_EXTERN(DashboardHtm);
 #else
-extern const uint8_t calibrationHtmStart[] asm(
-    "_binary_html_calibration_min_htm_start");
-extern const uint8_t calibrationHtmEnd[] asm(
-    "_binary_html_calibration_min_htm_end");
-extern const uint8_t beerHtmStart[] asm("_binary_html_beer_min_htm_start");
-extern const uint8_t beerHtmEnd[] asm("_binary_html_beer_min_htm_end");
 extern const uint8_t stabilityHtmStart[] asm(
     "_binary_html_stability_min_htm_start");
 extern const uint8_t stabilityHtmEnd[] asm(
@@ -72,6 +66,13 @@ extern const uint8_t graphHtmStart[] asm("_binary_html_graph_min_htm_start");
 extern const uint8_t graphHtmEnd[] asm("_binary_html_graph_min_htm_end");
 extern const uint8_t backupHtmStart[] asm("_binary_html_backup_min_htm_start");
 extern const uint8_t backupHtmEnd[] asm("_binary_html_backup_min_htm_end");
+
+extern const uint8_t calibrationHtmStart[] asm(
+    "_binary_html_calibration_min_htm_start");
+extern const uint8_t calibrationHtmEnd[] asm(
+    "_binary_html_calibration_min_htm_end");
+extern const uint8_t beerHtmStart[] asm("_binary_html_beer_min_htm_start");
+extern const uint8_t beerHtmEnd[] asm("_binary_html_beer_min_htm_end");
 extern const uint8_t dashboardHtmStart[] asm(
     "_binary_html_dashboard_min_htm_start");
 extern const uint8_t dashboardHtmEnd[] asm(

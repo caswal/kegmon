@@ -76,8 +76,71 @@ void Scale::setupHX711(bool force) {
     }
   }
 
+  #if CFG_SCALECOUNT > 2
+    if (!_hxScale[2] || force) {
+    if (_hxScale[2]) delete _hxScale[2];
+
+#if LOG_LEVEL == 6
+    Log.verbose(F("SCAL: HX711 initializing [2], using offset %l." CR),
+                myConfig.getScaleOffset(UnitIndex::U3));
+#endif
+    _hxScale[2] = new HX711();
+    Log.notice(F("SCAL: Initializing HX711 bus #3 on pins Data=%d,Clock=%d" CR),
+               myConfig.getPinScale3Data(), myConfig.getPinScale3Clock());
+    _hxScale[2]->begin(myConfig.getPinScale3Data(),
+                       myConfig.getPinScale3Clock());
+    _hxScale[2]->set_offset(myConfig.getScaleOffset(UnitIndex::U3));
+
+    if (_hxScale[2]->wait_ready_timeout(500)) {
+      Log.notice(F("SCAL: HX711 scale [2] found." CR));
+      _hxScale[2]->get_units(1);
+    } else {
+      Log.error(
+          F("SCAL: HX711 scale [2] not responding, disabling interface." CR));
+      delete _hxScale[2];
+      _hxScale[2] = 0;
+    }
+  }
+  #endif
+
+    #if CFG_SCALECOUNT > 3
+    if (!_hxScale[3] || force) {
+    if (_hxScale[3]) delete _hxScale[3];
+
+#if LOG_LEVEL == 6
+    Log.verbose(F("SCAL: HX711 initializing [3], using offset %l." CR),
+                myConfig.getScaleOffset(UnitIndex::U4));
+#endif
+    _hxScale[3] = new HX711();
+    Log.notice(F("SCAL: Initializing HX711 bus #4 on pins Data=%d,Clock=%d" CR),
+               myConfig.getPinScale4Data(), myConfig.getPinScale4Clock());
+    _hxScale[3]->begin(myConfig.getPinScale4Data(),
+                       myConfig.getPinScale4Clock());
+    _hxScale[3]->set_offset(myConfig.getScaleOffset(UnitIndex::U4));
+
+    if (_hxScale[3]->wait_ready_timeout(500)) {
+      Log.notice(F("SCAL: HX711 scale [3] found." CR));
+      _hxScale[3]->get_units(1);
+    } else {
+      Log.error(
+          F("SCAL: HX711 scale [3] not responding, disabling interface." CR));
+      delete _hxScale[3];
+      _hxScale[3] = 0;
+    }
+  }
+  #endif
+
+
   setScaleFactorHX711(UnitIndex::U1);
   setScaleFactorHX711(UnitIndex::U2);
+
+  #if CFG_SCALECOUNT > 2
+  setScaleFactorHX711(UnitIndex::U3);
+  #endif
+
+#if CFG_SCALECOUNT > 3
+  setScaleFactorHX711(UnitIndex::U4);
+  #endif  
 }
 
 void Scale::setScaleFactorHX711(UnitIndex idx) {

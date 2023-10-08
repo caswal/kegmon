@@ -24,15 +24,17 @@ SOFTWARE.
 #define INCBIN_OUTPUT_SECTION ".irom.text"
 #include <incbin.h>
 
-INCBIN(IndexHtm, "html/index.min.htm");
-INCBIN(ConfigHtm, "html/config.min.htm");
-INCBIN(CalibrateHtm, "html/calibration.min.htm");
 INCBIN(AboutHtm, "html/about.min.htm");
 INCBIN(UploadHtm, "html/upload.min.htm");
-INCBIN(BeerHtm, "html/beer.min.htm");
+
 INCBIN(StabilityHtm, "html/stability.min.htm");
 INCBIN(GraphHtm, "html/graph.min.htm");
 INCBIN(BackupHtm, "html/backup.min.htm");
+
+INCBIN(IndexHtm, "html/index.min.htm");
+INCBIN(ConfigHtm, "html/config.min.htm");
+INCBIN(CalibrateHtm, "html/calibration.min.htm");
 INCBIN(DashboardHtm, "html/dashboard.min.htm");
+INCBIN(BeerHtm, "html/beer.min.htm");
 
 // EOF

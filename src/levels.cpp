@@ -35,6 +35,15 @@ LevelDetection::LevelDetection() {
   _rawLevel[1] = new RawLevelDetection(UnitIndex::U2, 0.001, 0.001, 0.001);
   _statsLevel[0] = new StatsLevelDetection(UnitIndex::U1);
   _statsLevel[1] = new StatsLevelDetection(UnitIndex::U2);
+
+#if CFG_SCALECOUNT > 2
+  _rawLevel[2] = new RawLevelDetection(UnitIndex::U3, 0.001, 0.001, 0.001);
+  _statsLevel[2] = new StatsLevelDetection(UnitIndex::U3);
+#endif
+#if CFG_SCALECOUNT > 3
+  _rawLevel[3] = new RawLevelDetection(UnitIndex::U4, 0.001, 0.001, 0.001);
+  _statsLevel[3] = new StatsLevelDetection(UnitIndex::U4);
+#endif
 #if defined(ENABLE_ADDING_NOISE)
   randomSeed(12345L);
 #endif
@@ -85,7 +94,7 @@ void LevelDetection::pushKegUpdate(UnitIndex idx, float stableVol,
   myPush.pushKegInformation(idx, stableVol, pourVol, glasses);
   // Log.notice(F("LEVL: New level found: vol=%F, pour=%F [%d]." CR), stableVol,
   // pourVol, idx);
-
+#if CFG_SCALECOUNT == 2
   switch (idx) {
     case UnitIndex::U1:
       logLevels(stableVol, NAN, NAN, NAN);
@@ -95,6 +104,36 @@ void LevelDetection::pushKegUpdate(UnitIndex idx, float stableVol,
       logLevels(NAN, stableVol, NAN, NAN);
       break;
   }
+  #elif CFG_SCALECOUNT == 3
+  switch (idx) {
+    case UnitIndex::U1:
+      logLevels(stableVol, NAN, NAN, NAN, NAN, NAN);
+      break;
+
+    case UnitIndex::U2:
+      logLevels(NAN, stableVol, NAN, NAN, NAN, NAN);
+      break;
+ case UnitIndex::U3:
+      logLevels(NAN, NAN, stableVol, NAN, NAN, NAN);
+      break;      
+  }  
+  #elif CFG_SCALECOUNT == 4
+  switch (idx) {
+    case UnitIndex::U1:
+      logLevels(stableVol, NAN, NAN, NAN, NAN, NAN, NAN, NAN);
+      break;
+
+    case UnitIndex::U2:
+      logLevels(NAN, stableVol, NAN, NAN, NAN, NAN, NAN, NAN);
+      break;
+ case UnitIndex::U3:
+      logLevels(NAN, NAN, stableVol, NAN, NAN, NAN, NAN);
+      break;      
+ case UnitIndex::U4:
+      logLevels(NAN, NAN, NAN, stableVol, NAN, NAN, NAN);
+      break;        
+  }  
+  #endif
 }
 
 void LevelDetection::pushPourUpdate(UnitIndex idx, float stableVol,
@@ -103,17 +142,48 @@ void LevelDetection::pushPourUpdate(UnitIndex idx, float stableVol,
   // Log.notice(F("LEVL: New pour found: vol=%F, pour=%F [%d]." CR), stableVol,
   // pourVol, idx);
 
+#if CFG_SCALECOUNT == 2
   switch (idx) {
     case UnitIndex::U1:
       logLevels(stableVol, NAN, pourVol, NAN);
       break;
 
     case UnitIndex::U2:
-      logLevels(NAN, stableVol, NAN, pourVol);
+      logLevels(NAN, stableVol, NAN, NAN);
       break;
   }
-}
+  #elif CFG_SCALECOUNT == 3
+  switch (idx) {
+    case UnitIndex::U1:
+      logLevels(stableVol, NAN, NAN, pourVol, NAN, NAN);
+      break;
 
+    case UnitIndex::U2:
+      logLevels(NAN, stableVol, NAN, NAN, pourVol, NAN);
+      break;
+ case UnitIndex::U3:
+      logLevels(NAN, NAN, stableVol, NAN, NAN, pourVol);
+      break;      
+  }  
+  #elif CFG_SCALECOUNT == 4
+  switch (idx) {
+    case UnitIndex::U1:
+      logLevels(stableVol, NAN, NAN, NAN, pourVol, NAN, NAN, NAN);
+      break;
+
+    case UnitIndex::U2:
+      logLevels(NAN, stableVol, NAN, NAN, NAN, pourVol, NAN, NAN);
+      break;
+ case UnitIndex::U3:
+      logLevels(NAN, NAN, stableVol, NAN, NAN, NAN, pourVol, NAN);
+      break;      
+ case UnitIndex::U4:
+      logLevels(NAN, NAN, NAN, stableVol, NAN, NAN, NAN, pourVol);
+      break;        
+  }  
+  #endif
+}
+#if CFG_SCALECOUNT == 2
 void LevelDetection::logLevels(float kegVolume1, float kegVolume2,
                                float pourVolume1, float pourVolume2) {
   if ((isnan(kegVolume1) || kegVolume1 < 0.01) &&
@@ -158,6 +228,56 @@ void LevelDetection::logLevels(float kegVolume1, float kegVolume2,
     Log.error(F("LVL : Failed to write to levels log." CR));
   }
 }
+#elif CFG_SCALECOUNT == 3
+void LevelDetection::logLevels(float kegVolume1, float kegVolume2, float kegVolume3,
+                               float pourVolume1, float pourVolume2, float pourVolume3) {
+  if ((isnan(kegVolume1) || kegVolume1 < 0.01) &&
+      (isnan(kegVolume2) || kegVolume2 < 0.01) &&
+      (isnan(kegVolume3) || kegVolume3 < 0.01) &&
+      (isnan(pourVolume1) || pourVolume1 < 0.01) &&
+      (isnan(pourVolume2) || pourVolume2 < 0.01) &&
+      (isnan(pourVolume3) || pourVolume3 < 0.01)) {
+    Log.notice(F(
+        "LVL : Skipping level logging since all values are NaN or < 0.01" CR));
+  }
+
+  struct tm timeinfo;
+  time_t now = time(nullptr);
+  char s[100];
+  gmtime_r(&now, &timeinfo);
+  snprintf(&s[0], sizeof(s), "%04d-%02d-%02d %02d:%02d:%02d;%f;%f;%f;%f;%f;%f\n",
+           1900 + timeinfo.tm_year, 1 + timeinfo.tm_mon, timeinfo.tm_mday,
+           timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec,
+           kegVolume1 < 0 ? 0 : kegVolume1, kegVolume2 < 0 ? 0 : kegVolume2,  kegVolume3 < 0 ? 0 : kegVolume3,
+           pourVolume1 < 0 ? 0 : pourVolume1, pourVolume2 < 0 ? 0 : pourVolume2, pourVolume3 < 0 ? 0 : pourVolume3);
+          
+
+  Log.notice(F("LVL : Logging level change %s" CR), &s[0]);
+
+  File f = LittleFS.open(LEVELS_FILENAME, "a");
+
+  if (f && f.size() > LEVELS_FILEMAXSIZE) {
+    f.close();
+    LittleFS.remove(LEVELS_FILENAME2);
+    LittleFS.rename(LEVELS_FILENAME, LEVELS_FILENAME2);
+    f = LittleFS.open(LEVELS_FILENAME, "a");
+    Log.notice(F("LVL : Logfile maximum size reached, renaming files." CR));
+  }
+
+  if (f) {
+#if defined(ESP8266)
+    f.write(&s[0], strlen(&s[0]));
+#else
+    f.write((unsigned char*)&s[0], strlen(&s[0]));
+#endif
+    f.close();
+  } else {
+    Log.error(F("LVL : Failed to write to levels log." CR));
+  }
+}
+
+#elif CFG_SCALECOUNT == 4
+#endif
 
 bool LevelDetection::hasStableWeight(UnitIndex idx, LevelDetectionType type) {
   bool f = false;
