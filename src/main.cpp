@@ -68,6 +68,7 @@ void logStartup();
 void checkCoreDump();
 
 void setup() {
+  //A delay to give VS Code Serial Monitor changes to connect and pick up the early Log
   delay(500);
 #if defined(PERF_ENABLE)
   PerfLogging perf;
@@ -179,6 +180,8 @@ void setup() {
                                      myScale.isConnected(UnitIndex::U2),
                                      !isnan(myTemp.getLastTempC()));
 
+  pinMode(PIN_LED, OUTPUT);
+
   PERF_END("main-setup");
   PERF_PUSH();
   myTemp.read();
@@ -204,6 +207,8 @@ void loop() {
 #if CFG_SCALECOUNT > 2
   myScale.loop(UnitIndex::U3);
 #endif
+
+  digitalWrite(PIN_LED, loopCounter % 2);
 
   if (abs((int32_t)(millis() - loopMillis)) >
       loopInterval) {  // 2 seconds loop interval
@@ -377,7 +382,6 @@ void loop() {
         myLevelDetection.getStatsDetection(UnitIndex::U3)->getStableValue(),
         myLevelDetection.getStatsDetection(UnitIndex::U3)->getPourValue());
         #endif
-
 #if defined(ENABLE_INFLUX_DEBUG)
     // This part is used to send data to an influxdb in order to get data on
     // scale stability/drift over time.
